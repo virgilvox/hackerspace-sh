@@ -8,6 +8,10 @@ defineProps({
     type: String,
     default: null
   },
+  num: {
+    type: String,
+    required: true
+  },
   title: {
     type: String,
     required: true
@@ -20,13 +24,9 @@ defineProps({
     type: String,
     required: true
   },
-  meta: {
-    type: String,
-    required: true
-  },
-  linkText: {
-    type: String,
-    required: true
+  featured: {
+    type: Boolean,
+    default: false
   },
   external: {
     type: Boolean,
@@ -36,52 +36,62 @@ defineProps({
 </script>
 
 <template>
-  <router-link v-if="to" :to="to" class="project">
+  <router-link v-if="to" :to="to" class="project" :class="{ featured, 'has-icon': $slots.visual && !featured }">
+    <div v-if="$slots.visual && !featured" class="project-icon">
+      <slot name="visual" />
+    </div>
     <div class="project-content">
+      <span class="project-num">{{ num }}</span>
       <h2 class="project-title">{{ title }}</h2>
       <p class="project-desc">{{ description }}</p>
-      <div class="project-meta">
-        <span>{{ type }}</span>
-        <span>{{ meta }}</span>
+      <div class="project-footer">
+        <span class="project-type">{{ type }}</span>
+        <span class="project-arrow">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M3 8h10M9 4l4 4-4 4"/>
+          </svg>
+        </span>
       </div>
     </div>
-    <span class="project-link">
-      {{ linkText }}
-      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
-        <path d="M3 8h10M9 4l4 4-4 4"/>
-      </svg>
-    </span>
+    <div v-if="featured && $slots.visual" class="project-visual">
+      <slot name="visual" />
+    </div>
   </router-link>
-  <a v-else :href="href" class="project" target="_blank" rel="noopener">
+  <a v-else :href="href" class="project" :class="{ featured, 'has-icon': $slots.visual && !featured }" target="_blank" rel="noopener">
+    <div v-if="$slots.visual && !featured" class="project-icon">
+      <slot name="visual" />
+    </div>
     <div class="project-content">
+      <span class="project-num">{{ num }}</span>
       <h2 class="project-title">{{ title }}</h2>
       <p class="project-desc">{{ description }}</p>
-      <div class="project-meta">
-        <span>{{ type }}</span>
-        <span>{{ meta }}</span>
+      <div class="project-footer">
+        <span class="project-type">{{ type }}</span>
+        <span class="project-arrow">
+          <svg v-if="external" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M4 12L12 4M12 4H6M12 4v6"/>
+          </svg>
+          <svg v-else viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M3 8h10M9 4l4 4-4 4"/>
+          </svg>
+        </span>
       </div>
     </div>
-    <span class="project-link">
-      {{ linkText }}
-      <svg v-if="external" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
-        <path d="M4 12L12 4M12 4H6M12 4v6"/>
-      </svg>
-      <svg v-else viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
-        <path d="M3 8h10M9 4l4 4-4 4"/>
-      </svg>
-    </span>
+    <div v-if="featured && $slots.visual" class="project-visual">
+      <slot name="visual" />
+    </div>
   </a>
 </template>
 
 <style scoped>
 .project {
     background: var(--bg);
-    padding: 32px;
-    display: grid;
-    grid-template-columns: 1fr auto;
-    gap: 24px;
-    align-items: start;
-    transition: background 0.2s ease;
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    min-height: 280px;
+    position: relative;
+    transition: background 0.3s ease;
 }
 
 .project:hover {
@@ -91,71 +101,145 @@ defineProps({
 .project-content {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    flex: 1;
+}
+
+/* Icon for non-featured cards */
+.project-icon {
+    position: absolute;
+    top: 24px;
+    right: 24px;
+    width: 48px;
+    height: 48px;
+    color: var(--text);
+    transition: all 0.3s ease;
+}
+
+.project-icon :deep(svg) {
+    width: 100%;
+    height: 100%;
+}
+
+.project.has-icon .project-num {
+    padding-right: 60px;
+}
+
+.project-num {
+    font-size: 0.6875rem;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+    margin-bottom: 24px;
 }
 
 .project-title {
-    font-size: 1rem;
-    font-weight: 600;
+    font-family: 'Libre Baskerville', serif;
+    font-size: 1.625rem;
+    font-weight: 400;
     letter-spacing: -0.01em;
+    margin-bottom: 12px;
+    transition: color 0.3s ease;
+}
+
+.project:hover .project-title {
+    color: var(--accent);
 }
 
 .project-desc {
-    font-size: 0.875rem;
-    color: var(--text-dim);
-    max-width: 480px;
-}
-
-.project-meta {
-    font-size: 0.75rem;
-    color: var(--text-dim);
-    margin-top: 8px;
-    display: flex;
-    gap: 16px;
-}
-
-.project-meta span {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.project-link {
     font-size: 0.8125rem;
-    font-weight: 500;
     color: var(--text-dim);
-    padding: 8px 0;
+    line-height: 1.65;
+    flex-grow: 1;
+}
+
+.project-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 32px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+}
+
+.project-type {
+    font-size: 0.6875rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+.project-arrow {
+    width: 24px;
+    height: 24px;
     display: flex;
     align-items: center;
-    gap: 8px;
-    transition: color 0.2s ease;
-    white-space: nowrap;
+    justify-content: center;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    transition: all 0.3s ease;
 }
 
-.project:hover .project-link {
-    color: var(--highlight);
+.project-arrow svg {
+    width: 12px;
+    height: 12px;
+    color: var(--text-dim);
+    transition: all 0.3s ease;
 }
 
-.project-link svg {
-    width: 14px;
-    height: 14px;
-    transition: transform 0.2s ease;
+.project:hover .project-arrow {
+    background: var(--accent);
+    border-color: var(--accent);
 }
 
-.project:hover .project-link svg {
-    transform: translateX(4px);
+.project:hover .project-arrow svg {
+    color: var(--bg);
+    transform: translateX(2px);
+}
+
+/* Featured project - full width */
+.project.featured {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    align-items: center;
+    gap: 60px;
+    min-height: auto;
+    padding: 48px;
+}
+
+.project.featured .project-content {
+    flex: 1;
+}
+
+.project.featured .project-visual {
+    width: 180px;
+    height: 180px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: var(--text);
+}
+
+.project.featured .project-visual :deep(svg) {
+    width: 100%;
+    height: 100%;
 }
 
 /* Mobile */
-@media (max-width: 600px) {
+@media (max-width: 768px) {
     .project {
-        grid-template-columns: 1fr;
-        gap: 16px;
-        padding: 24px 20px;
+        padding: 32px 24px;
+        min-height: auto;
     }
 
-    .project-link {
-        justify-content: flex-start;
+    .project.featured {
+        flex-direction: column;
+        gap: 32px;
+    }
+
+    .project.featured .project-visual {
+        width: 140px;
+        height: 140px;
+        margin: 0 auto;
     }
 }
 </style>
